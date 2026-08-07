@@ -1,0 +1,9 @@
+{
+  "type": "alchemist:decomposing",
+  "input": { "item": "minecraft:sugar" },
+  "outputs": [
+    { "id": "alchemist:atom_carbon", "count": 12 },
+    { "id": "alchemist:atom_hydrogen", "count": 22 },
+    { "id": "alchemist:atom_oxygen", "count": 11 }
+  ]
+}

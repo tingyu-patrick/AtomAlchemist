@@ -1,0 +1,7 @@
+{
+  "type": "alchemist:decomposing",
+  "input": { "item": "minecraft:iron_ingot" },
+  "outputs": [
+    { "id": "alchemist:atom_iron", "count": 9 }
+  ]
+}

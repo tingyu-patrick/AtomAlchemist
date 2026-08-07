@@ -1,0 +1,14 @@
+{
+  "itemGroup.alchemist": "Alchemist",
+
+  "item.alchemist.atom_hydrogen": "Hydrogen Atom",
+  "item.alchemist.atom_carbon": "Carbon Atom",
+  "item.alchemist.atom_oxygen": "Oxygen Atom",
+  "item.alchemist.atom_iron": "Iron Atom",
+
+  "block.alchemist.decomposer": "Decomposer",
+
+  "alchemist.configuration.title": "Alchemist Configs",
+  "alchemist.configuration.section.alchemist.common.toml": "Alchemist Configs",
+  "alchemist.configuration.section.alchemist.common.toml.title": "Alchemist Configs"
+}
