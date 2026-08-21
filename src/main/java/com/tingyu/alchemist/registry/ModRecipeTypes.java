@@ -2,6 +2,7 @@ package com.tingyu.alchemist.registry;
 
 import com.tingyu.alchemist.Alchemist;
 import com.tingyu.alchemist.recipe.DecomposingRecipe;
+import com.tingyu.alchemist.recipe.SynthesizingRecipe;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -17,6 +18,14 @@ public class ModRecipeTypes {
                 @Override
                 public String toString() {
                     return "alchemist:decomposing";
+                }
+            });
+
+    public static final DeferredHolder<RecipeType<?>, RecipeType<SynthesizingRecipe>> SYNTHESIZING =
+            RECIPE_TYPES.register("synthesizing", () -> new RecipeType<SynthesizingRecipe>() {
+                @Override
+                public String toString() {
+                    return "alchemist:synthesizing";
                 }
             });
 }

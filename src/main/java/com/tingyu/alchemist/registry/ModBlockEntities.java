@@ -2,6 +2,7 @@ package com.tingyu.alchemist.registry;
 
 import com.tingyu.alchemist.Alchemist;
 import com.tingyu.alchemist.block.entity.DecomposerBlockEntity;
+import com.tingyu.alchemist.block.entity.SynthesizerBlockEntity;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -15,4 +16,8 @@ public class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<DecomposerBlockEntity>> DECOMPOSER =
             BLOCK_ENTITY_TYPES.register("decomposer", () -> BlockEntityType.Builder.of(
                     DecomposerBlockEntity::new, ModBlocks.DECOMPOSER.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SynthesizerBlockEntity>> SYNTHESIZER =
+            BLOCK_ENTITY_TYPES.register("synthesizer", () -> BlockEntityType.Builder.of(
+                    SynthesizerBlockEntity::new, ModBlocks.SYNTHESIZER.get()).build(null));
 }

@@ -2,6 +2,7 @@ package com.tingyu.alchemist.registry;
 
 import com.tingyu.alchemist.Alchemist;
 import com.tingyu.alchemist.menu.DecomposerMenu;
+import com.tingyu.alchemist.menu.SynthesizerMenu;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.MenuType;
@@ -15,4 +16,7 @@ public class ModMenuTypes {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DecomposerMenu>> DECOMPOSER =
             MENU_TYPES.register("decomposer", () -> IMenuTypeExtension.create(DecomposerMenu::create));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SynthesizerMenu>> SYNTHESIZER =
+            MENU_TYPES.register("synthesizer", () -> IMenuTypeExtension.create(SynthesizerMenu::create));
 }

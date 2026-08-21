@@ -19,6 +19,8 @@ public class ModItems {
 
     public static final DeferredItem<BlockItem> DECOMPOSER =
             ITEMS.registerSimpleBlockItem(ModBlocks.DECOMPOSER);
+    public static final DeferredItem<BlockItem> SYNTHESIZER =
+            ITEMS.registerSimpleBlockItem(ModBlocks.SYNTHESIZER);
 
     private static DeferredItem<AtomItem> registerAtom(Element element) {
         return ITEMS.registerItem("atom_" + element.id(), props -> new AtomItem(props, element));

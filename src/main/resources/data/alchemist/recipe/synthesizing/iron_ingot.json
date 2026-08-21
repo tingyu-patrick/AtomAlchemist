@@ -1,0 +1,7 @@
+{
+  "type": "alchemist:synthesizing",
+  "inputs": [
+    { "id": "alchemist:atom_iron", "count": 9 }
+  ],
+  "output": { "id": "minecraft:iron_ingot", "count": 1 }
+}

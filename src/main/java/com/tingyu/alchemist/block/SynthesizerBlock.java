@@ -3,7 +3,7 @@ package com.tingyu.alchemist.block;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
-import com.tingyu.alchemist.block.entity.DecomposerBlockEntity;
+import com.tingyu.alchemist.block.entity.SynthesizerBlockEntity;
 import com.tingyu.alchemist.registry.ModBlockEntities;
 
 import net.minecraft.core.BlockPos;
@@ -18,10 +18,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
-public class DecomposerBlock extends BaseEntityBlock {
-    public static final MapCodec<DecomposerBlock> CODEC = simpleCodec(DecomposerBlock::new);
+public class SynthesizerBlock extends BaseEntityBlock {
+    public static final MapCodec<SynthesizerBlock> CODEC = simpleCodec(SynthesizerBlock::new);
 
-    public DecomposerBlock(Properties properties) {
+    public SynthesizerBlock(Properties properties) {
         super(properties);
     }
 
@@ -37,7 +37,7 @@ public class DecomposerBlock extends BaseEntityBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new DecomposerBlockEntity(pos, state);
+        return new SynthesizerBlockEntity(pos, state);
     }
 
     @Nullable
@@ -46,7 +46,7 @@ public class DecomposerBlock extends BaseEntityBlock {
         if (level.isClientSide) {
             return null;
         }
-        return createTickerHelper(type, ModBlockEntities.DECOMPOSER.get(), DecomposerBlockEntity::serverTick);
+        return createTickerHelper(type, ModBlockEntities.SYNTHESIZER.get(), SynthesizerBlockEntity::serverTick);
     }
 
     @Override
@@ -55,8 +55,8 @@ public class DecomposerBlock extends BaseEntityBlock {
             return InteractionResult.SUCCESS;
         }
         BlockEntity entity = level.getBlockEntity(pos);
-        if (entity instanceof DecomposerBlockEntity decomposer) {
-            player.openMenu(decomposer, pos);
+        if (entity instanceof SynthesizerBlockEntity synthesizer) {
+            player.openMenu(synthesizer, pos);
         }
         return InteractionResult.CONSUME;
     }

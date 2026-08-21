@@ -1,10 +1,13 @@
 package com.tingyu.alchemist.block.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.tingyu.alchemist.menu.DecomposerMenu;
-import com.tingyu.alchemist.recipe.DecomposingRecipe;
+import com.tingyu.alchemist.item.AtomItem;
+import com.tingyu.alchemist.menu.SynthesizerMenu;
+import com.tingyu.alchemist.recipe.AtomRecipeInput;
+import com.tingyu.alchemist.recipe.SynthesizingRecipe;
 import com.tingyu.alchemist.registry.ModBlockEntities;
 import com.tingyu.alchemist.registry.ModRecipeTypes;
 
@@ -12,26 +15,26 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.MenuProvider;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
-public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
+public class SynthesizerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int PROCESS_TIME_TICKS = 100;
 
-    public static final int INPUT_SLOT = 0;
-    public static final int FUEL_SLOT = 1;
-    public static final int OUTPUT_SLOT_COUNT = 4;
-    public static final int SLOT_COUNT = 2 + OUTPUT_SLOT_COUNT;
+    public static final int INPUT_SLOT_COUNT = 9;
+    public static final int FUEL_SLOT = INPUT_SLOT_COUNT;
+    public static final int OUTPUT_SLOT = INPUT_SLOT_COUNT + 1;
+    public static final int SLOT_COUNT = INPUT_SLOT_COUNT + 2;
 
     private final ItemStackHandler itemHandler = new ItemStackHandler(SLOT_COUNT) {
         @Override
@@ -39,10 +42,13 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
             setChanged();
         }
 
-        // Deliberately not restricted to input/fuel here: insertItem() (used internally to push
-        // results into the output slots) checks isItemValid() itself, so restricting it here
-        // would also block the machine from filling its own output slots. Player-facing
-        // restriction is handled per-slot instead, via Slot#mayPlace in the menu.
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            // Only atoms belong in the input slots; fuel/output stay open at this layer
+            // (fuel is validated by burn time, output is filled by the machine itself via
+            // insertItem() -- player-facing restriction happens via Slot#mayPlace in the menu).
+            return slot >= INPUT_SLOT_COUNT || stack.getItem() instanceof AtomItem;
+        }
     };
 
     private int litTimeRemaining;
@@ -81,8 +87,8 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
         return dataAccess;
     }
 
-    public DecomposerBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.DECOMPOSER.get(), pos, state);
+    public SynthesizerBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.SYNTHESIZER.get(), pos, state);
     }
 
     public ItemStackHandler getItemHandler() {
@@ -105,7 +111,7 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
         return litDuration;
     }
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, DecomposerBlockEntity entity) {
+    public static void serverTick(Level level, BlockPos pos, BlockState state, SynthesizerBlockEntity entity) {
         boolean changed = false;
 
         if (entity.litTimeRemaining > 0) {
@@ -113,16 +119,20 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
             changed = true;
         }
 
-        ItemStack input = entity.itemHandler.getStackInSlot(INPUT_SLOT);
-        Optional<RecipeHolder<DecomposingRecipe>> match = input.isEmpty() ? Optional.empty()
-                : level.getRecipeManager().getRecipeFor(ModRecipeTypes.DECOMPOSING.get(), new SingleRecipeInput(input), level);
+        List<ItemStack> inputs = new ArrayList<>(INPUT_SLOT_COUNT);
+        for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
+            inputs.add(entity.itemHandler.getStackInSlot(slot));
+        }
 
-        boolean canProcess = match.isPresent() && entity.canFitOutputs(match.get().value().outputs());
+        Optional<RecipeHolder<SynthesizingRecipe>> match = level.getRecipeManager()
+                .getRecipeFor(ModRecipeTypes.SYNTHESIZING.get(), new AtomRecipeInput(inputs), level);
+
+        boolean canProcess = match.isPresent() && entity.canFitOutput(match.get().value().getResultItem(level.registryAccess()));
 
         if (canProcess) {
             if (!entity.isLit()) {
                 ItemStack fuel = entity.itemHandler.getStackInSlot(FUEL_SLOT);
-                int fuelBurnTime = fuel.getBurnTime(ModRecipeTypes.DECOMPOSING.get());
+                int fuelBurnTime = fuel.getBurnTime(ModRecipeTypes.SYNTHESIZING.get());
                 if (fuelBurnTime > 0) {
                     entity.itemHandler.extractItem(FUEL_SLOT, 1, false);
                     entity.litTimeRemaining = fuelBurnTime;
@@ -136,7 +146,7 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
                 changed = true;
                 if (entity.processingProgress >= PROCESS_TIME_TICKS) {
                     entity.processingProgress = 0;
-                    entity.decompose(match.get().value());
+                    entity.synthesize(match.get().value());
                 }
             } else if (entity.processingProgress != 0) {
                 entity.processingProgress = 0;
@@ -152,37 +162,31 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
         }
     }
 
-    private void decompose(DecomposingRecipe recipe) {
-        itemHandler.extractItem(INPUT_SLOT, 1, false);
-        for (ItemStack output : recipe.outputs()) {
-            insertIntoOutputs(output.copy());
+    private void synthesize(SynthesizingRecipe recipe) {
+        // Consume only what the recipe needs; any surplus of a required atom (or
+        // unrelated atoms) stays untouched in the input slots.
+        for (ItemStack required : recipe.inputs()) {
+            consumeFromInputSlots(required.getItem(), required.getCount());
+        }
+        itemHandler.insertItem(OUTPUT_SLOT, recipe.getResultItem(level.registryAccess()), false);
+    }
+
+    private void consumeFromInputSlots(Item item, int amount) {
+        int remaining = amount;
+        for (int slot = 0; slot < INPUT_SLOT_COUNT && remaining > 0; slot++) {
+            ItemStack stack = itemHandler.getStackInSlot(slot);
+            if (stack.getItem() != item) {
+                continue;
+            }
+            int extract = Math.min(remaining, stack.getCount());
+            itemHandler.extractItem(slot, extract, false);
+            remaining -= extract;
         }
     }
 
-    // A recipe can yield several distinct atoms (e.g. sugar -> C/H/O); this checks them all
-    // against a scratch copy of the output slots at once so a multi-output recipe never
-    // partially reserves slots before discovering a later output doesn't fit.
-    private boolean canFitOutputs(List<ItemStack> outputs) {
-        ItemStackHandler scratch = new ItemStackHandler(SLOT_COUNT);
-        for (int slot = 0; slot < SLOT_COUNT; slot++) {
-            scratch.setStackInSlot(slot, itemHandler.getStackInSlot(slot).copy());
-        }
-        for (ItemStack output : outputs) {
-            ItemStack remainder = output.copy();
-            for (int slot = FUEL_SLOT + 1; slot < SLOT_COUNT && !remainder.isEmpty(); slot++) {
-                remainder = scratch.insertItem(slot, remainder, false);
-            }
-            if (!remainder.isEmpty()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private void insertIntoOutputs(ItemStack stack) {
-        for (int slot = FUEL_SLOT + 1; slot < SLOT_COUNT && !stack.isEmpty(); slot++) {
-            stack = itemHandler.insertItem(slot, stack, false);
-        }
+    private boolean canFitOutput(ItemStack result) {
+        ItemStack remainder = itemHandler.insertItem(OUTPUT_SLOT, result, true);
+        return remainder.isEmpty();
     }
 
     @Override
@@ -205,11 +209,11 @@ public class DecomposerBlockEntity extends BlockEntity implements MenuProvider {
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.alchemist.decomposer");
+        return Component.translatable("block.alchemist.synthesizer");
     }
 
     @Override
     public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
-        return new DecomposerMenu(containerId, playerInventory, this);
+        return new SynthesizerMenu(containerId, playerInventory, this);
     }
 }

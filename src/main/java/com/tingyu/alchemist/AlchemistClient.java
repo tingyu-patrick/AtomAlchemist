@@ -1,6 +1,7 @@
 package com.tingyu.alchemist;
 
 import com.tingyu.alchemist.client.screen.DecomposerScreen;
+import com.tingyu.alchemist.client.screen.SynthesizerScreen;
 import com.tingyu.alchemist.item.AtomItem;
 import com.tingyu.alchemist.registry.ModItems;
 import com.tingyu.alchemist.registry.ModMenuTypes;
@@ -31,6 +32,7 @@ public class AlchemistClient {
     @SubscribeEvent
     static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.DECOMPOSER.get(), DecomposerScreen::new);
+        event.register(ModMenuTypes.SYNTHESIZER.get(), SynthesizerScreen::new);
     }
 
     @SubscribeEvent

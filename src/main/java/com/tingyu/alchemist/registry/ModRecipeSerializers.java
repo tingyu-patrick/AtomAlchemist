@@ -2,6 +2,7 @@ package com.tingyu.alchemist.registry;
 
 import com.tingyu.alchemist.Alchemist;
 import com.tingyu.alchemist.recipe.DecomposingRecipeSerializer;
+import com.tingyu.alchemist.recipe.SynthesizingRecipeSerializer;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -14,4 +15,7 @@ public class ModRecipeSerializers {
 
     public static final DeferredHolder<RecipeSerializer<?>, DecomposingRecipeSerializer> DECOMPOSING =
             RECIPE_SERIALIZERS.register("decomposing", DecomposingRecipeSerializer::new);
+
+    public static final DeferredHolder<RecipeSerializer<?>, SynthesizingRecipeSerializer> SYNTHESIZING =
+            RECIPE_SERIALIZERS.register("synthesizing", SynthesizingRecipeSerializer::new);
 }

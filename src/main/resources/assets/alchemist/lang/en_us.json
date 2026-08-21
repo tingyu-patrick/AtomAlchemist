@@ -7,6 +7,7 @@
   "item.alchemist.atom_iron": "Iron Atom",
 
   "block.alchemist.decomposer": "Decomposer",
+  "block.alchemist.synthesizer": "Synthesizer",
 
   "alchemist.configuration.title": "Alchemist Configs",
   "alchemist.configuration.section.alchemist.common.toml": "Alchemist Configs",
